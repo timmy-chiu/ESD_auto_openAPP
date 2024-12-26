@@ -44,6 +44,7 @@ class DeviceMonitorWindow(QWidget):
         # 設置設備訊息標籤
         self.label = QLabel("監控設備狀態變化...", self)
         self.label.setAlignment(Qt.AlignCenter)
+        self.label.setWordWrap(True)  # 啟用文字自動換行
         font = self.label.font()
         font.setPointSize(12)
         self.label.setFont(font)

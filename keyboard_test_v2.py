@@ -141,6 +141,7 @@ class KeyboardTestApp(QtWidgets.QWidget):
         # 創建標籤用於顯示提示文字
         self.label = QtWidgets.QLabel("", self)
         self.label.setAlignment(QtCore.Qt.AlignCenter)
+        self.label.setWordWrap(True)  # 啟用文字自動換行
         font = self.label.font()
         font.setPointSize(20)
         self.label.setFont(font)
