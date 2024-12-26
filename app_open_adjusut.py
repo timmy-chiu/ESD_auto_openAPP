@@ -12,16 +12,24 @@ def open_device_manager(x, y, width, height):
     # 調整視窗大小與位置
     adjust_window(['裝置管理員', 'Device Manager'], x, y, width, height)
 
+
+def open_device_watcher(x, y, width, height):
     # 使用 subprocess 開啟裝置監控
     subprocess.Popen(["dist/device_watcher.exe"])  # 確保路徑正確
 
     # 調整視窗大小與位置
-    watcher_h = int(height / 4)
-    watcher_y = y + height - watcher_h
-    adjust_window(['device watcher'], x, watcher_y, width, watcher_h)
+    adjust_window(['device watcher'], x, y, width, height)
 
 
-def open_notepad(x, y, width, height):
+def open_battery_setting(x, y, width, height):
+    # 打開電源與電池設定
+    os.system("start ms-settings:batterysaver")
+
+    # 調整視窗大小與位置
+    adjust_window(['設定', 'settings'], x, y, width, height)
+
+
+def open_keyboard_test(x, y, width, height):
     # 使用 subprocess 啟動 keyboard_test.exe
     subprocess.Popen(["dist/keyboard_test_v2.exe"])  # 確保路徑正確
 
@@ -165,26 +173,32 @@ def open_and_layout_windows():
 
     # 裝置管理員寬度
     width_dm = int(screen_width * 0.2)  # 20% 寬度
-
     # 開啟裝置管理員
     open_device_manager(screen_width - width_dm, 0, width_dm, screen_height)
 
-    # 調整剩餘寬度
-    remaining_width = screen_width - width_dm
-    w_half = int(remaining_width / 2)
-    h_half = int(screen_height / 2)
+    # 裝置監控高度
+    height_dw = int(screen_height * 0.25)  # 25% 高度
+    # 開啟裝置監控 裝置管理員下方25% 高度
+    open_device_watcher(screen_width - width_dm, screen_height-height_dw, width_dm, height_dw)
+
 
     # 開啟burnInTest（剩餘畫面的左下）
-    open_burnInTest(0, 0, w_half, h_half * 2)
+    # open_burnInTest(0, 0, w_half, screen_height)
 
+    w_half = int(screen_width * 0.5)
     # 開啟相機（剩餘畫面的左上）
-    open_camera(0, 0, w_half, h_half)
+    open_camera(0, 0, w_half, int(screen_height * 0.7))
 
+    # 調整剩餘寬度
+    remaining_w = screen_width - width_dm - w_half
     # 開啟媒體播放器（剩餘畫面的右上）
-    open_media_player(w_half, 0, w_half, h_half)
+    open_media_player(w_half, 0, remaining_w, int(screen_height * 0.4))
 
-    # 開啟記事本（剩餘畫面的右下）
-    open_notepad(w_half, h_half, w_half, h_half)
+    # 開啟鍵盤測試（剩餘畫面的右下）
+    open_keyboard_test(w_half, int(screen_height * 0.4), remaining_w, int(screen_height * 0.3))
+
+    # 開啟電池設定 跟裝置監控同大小
+    open_battery_setting(w_half, int(screen_height * 0.7), remaining_w, int(screen_height * 0.3))
 
 
 open_paint_maximize()
