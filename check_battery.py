@@ -1,6 +1,6 @@
 import time
-
 import psutil
+
 
 def check_battery_status():
     battery = psutil.sensors_battery()
@@ -8,16 +8,20 @@ def check_battery_status():
         print("無法獲取電池資訊，可能是桌機或沒有安裝感測器。")
         return
 
-    percent = battery.percent
+    battery_percent = battery.percent
     charging = battery.power_plugged
 
-    print(f"電池電量: {percent}%")
     if charging:
-        print("筆電正在充電中🔌")
+        is_charging = True
     else:
-        print("筆電未充電🔋")
+        is_charging = False
+
+    return is_charging, battery_percent
+
 
 if __name__ == "__main__":
     while True:
-        check_battery_status()
-        time.sleep(5)
+        is_charging, battery_percent = check_battery_status()
+        if is_charging is False:
+            print("電池未充電")
+        time.sleep(1)
