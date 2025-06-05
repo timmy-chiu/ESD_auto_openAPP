@@ -15,7 +15,7 @@ def paint():
 
     # 定義一組顏色，繪製線條時會循環使用
     colors = [
-        (0, 0, 0),       # 黑色
+        (0, 255, 0),     # 綠色
         (255, 0, 0),     # 紅色
     ]
     color_index = 0  # 當前顏色的索引
@@ -63,7 +63,7 @@ def paint():
                 if drawing:
                     current_pos = event.pos
                     if last_pos is not None:
-                        pygame.draw.line(screen, current_color, last_pos, current_pos, 3)
+                        pygame.draw.line(screen, current_color, last_pos, current_pos, 7)
                     last_pos = current_pos
                     last_event_time = current_time  # 重置計時器
 
