@@ -3,6 +3,8 @@ import wmi  # 導入 wmi 模組，用於訪問 Windows 管理工具
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout
 from PyQt5.QtCore import QTimer, Qt
 from PyQt5.QtGui import QPalette, QColor
+from check_battery import check_battery_status
+
 
 def get_error_description(error_code):
     error_descriptions = {
@@ -30,6 +32,7 @@ class DeviceMonitorWindow(QWidget):
         self.timer = QTimer()
         self.timer.timeout.connect(self.check_device_status)
         self.timer.start(3000)  # 每1秒執行一次檢查
+        self.last_battery_percent = None
 
     def init_ui(self):
         # 設置視窗標題和大小
@@ -46,7 +49,7 @@ class DeviceMonitorWindow(QWidget):
         self.label.setAlignment(Qt.AlignCenter)
         self.label.setWordWrap(True)  # 啟用文字自動換行
         font = self.label.font()
-        font.setPointSize(12)
+        font.setPointSize(20)
         self.label.setFont(font)
 
 
@@ -104,6 +107,26 @@ class DeviceMonitorWindow(QWidget):
             pass  # 超時則忽略
         except Exception as e:
             self.display_alert(f"修改監視器錯誤：{e}")
+
+        # 額外檢查電池狀態
+        try:
+            battery_status = check_battery_status()
+            if battery_status:
+                # 取得電池狀態
+                is_charging, battery_percent = battery_status
+
+                # 狀態為未充電
+                if not is_charging:
+                    self.display_alert("Battery not charging")
+
+                # 電池電量下降
+                if self.last_battery_percent is not None and battery_percent < self.last_battery_percent:
+                    self.display_alert("Battery not charging")
+
+                self.last_battery_percent = battery_percent
+        except Exception as e:
+            print(f"檢查電池狀態失敗: {e}")
+
 
 def main():
     app = QApplication(sys.argv)
