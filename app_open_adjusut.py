@@ -48,7 +48,7 @@ def open_media_player(x, y, width, height):
         m3u8_path = os.path.join(config["video_dir"], "playlist.m3u8")
         with open(m3u8_path, "w") as f:
             f.write("#EXTM3U\n")
-            for _ in range(5):
+            for _ in range(15):
                 f.write("#EXTINF:-1,\n")
                 f.write("timer.mp4\n")
         os.startfile(m3u8_path)
@@ -84,32 +84,36 @@ def open_burnInTest(x, y, width, height):
     try:
         subprocess.Popen(config["burnintest_path"])
         time.sleep(10)
-        pyautogui.press('enter')
-        time.sleep(1)
 
-        window = gw.getWindowsWithTitle('BurnInTest')
+        # 先將焦點切到桌面（按 Win + D）
+        pyautogui.hotkey('winleft', 'd')
+        time.sleep(1)
+        pyautogui.hotkey('winleft', 'd')
+
+        # 再切回 BurnInTest 視窗並啟動測試
+        window = gw.getWindowsWithTitle('BurnInTest 10.2')
         if window:
             window[0].activate()
-            pyautogui.press('f6')
-            time.sleep(3)
-            pyautogui.press('enter')
             time.sleep(1)
-            pyautogui.press('enter')
-            time.sleep(3)
+            pyautogui.press('f4')
+            print("已按下 F4 啟動測試。")
         else:
             print("無法找到 BurnInTest 視窗")
 
-        adjust_window(['BurnInTest'], x, y, width, height)
-        time.sleep(5)
+        adjust_window(['BurnInTest 10.2'], x, y, width, height)
+        time.sleep(10)
 
-        three_d_window = gw.getWindowsWithTitle('3D')
+        # 檢查是否有 3D 視窗
+        three_d_window = gw.getWindowsWithTitle('BurnInTest 3D')
         if three_d_window:
-            three_d_window[0].minimize()
-            print("3D 視窗已成功縮小。")
+            print("3D 視窗已開啟，切回 BurnInTest 視窗。")
+            if window:
+                window[0].activate()
         else:
             print("找不到 3D 視窗。")
     except Exception as e:
         print("open_burnInTest 錯誤:", e)
+
 
 
 def adjust_window(titles, x, y, width, height):
@@ -150,8 +154,8 @@ def open_and_layout_windows():
 
     remaining_w = screen_width - width_dm - w_half
     open_media_player(w_half, 0, remaining_w, int(screen_height * 0.4))
-    open_keyboard_test(w_half, int(screen_height * 0.4), remaining_w, int(screen_height * 0.3))
     open_battery_setting(w_half, int(screen_height * 0.7), remaining_w, int(screen_height * 0.3))
+    open_keyboard_test(w_half, int(screen_height * 0.4), remaining_w, int(screen_height * 0.3))
 
 
 if __name__ == "__main__":
