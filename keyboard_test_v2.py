@@ -1,6 +1,7 @@
 import sys
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtGui import QPalette, QColor
+import pygetwindow as gw
 
 # 定義要測試的一般按鍵列表
 key_list_general = [
@@ -121,6 +122,8 @@ class KeyboardTestApp(QtWidgets.QWidget):
         self.enter_press_count = 0
         # Right 鍵連續按下計數
         self.right_press_count = 0
+        # Space 鍵連續按下計數
+        self.space_press_count = 0
         # 測試是否已經開始的旗標
         self.test_started = False
         # 是否處於數字鍵盤測試模式
@@ -242,10 +245,17 @@ class KeyboardTestApp(QtWidgets.QWidget):
                     self.right_press_count = 0
                     self.key_list = key_list_numeric  # 切換到數字鍵盤按鍵列表
                     self.display_current_key()
+            elif key == QtCore.Qt.Key_Space:
+                self.space_press_count += 1
+                if self.space_press_count >= 3:
+                    self.space_press_count = 0
+                    self.focus_touch_test_window()
+                return
             else:
                 # 其他按鍵，重置計數
                 self.enter_press_count = 0
                 self.right_press_count = 0
+                self.space_press_count = 0
             return
 
         # 獲取當前應按下的按鍵
@@ -263,6 +273,21 @@ class KeyboardTestApp(QtWidgets.QWidget):
         else:
             # 按錯了鍵，可以在此處添加提示訊息或記錄
             pass
+
+    def focus_touch_test_window(self):
+        try:
+            windows = gw.getWindowsWithTitle("touch test")
+            if windows:
+                win = windows[0]
+                if win.isMinimized:
+                    win.restore()  # 還原視窗
+                win.activate()  # 聚焦視窗
+                print("已叫出並聚焦 touch test 視窗")
+            else:
+                print("找不到 touch test 視窗")
+        except Exception as e:
+            print("切換視窗時發生錯誤:", e)
+
 
 def main():
     app = QtWidgets.QApplication(sys.argv)

@@ -1,5 +1,7 @@
 import pygame
 import sys
+import pygetwindow as gw
+import time
 
 def paint():
     # 初始化 Pygame
@@ -70,8 +72,9 @@ def paint():
             # 按下 ESC 鍵退出
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    pygame.quit()
-                    sys.exit()
+                    window = gw.getWindowsWithTitle('touch')
+                    if window:
+                        window[0].minimize()
 
             # 視窗大小調整事件
             elif event.type == pygame.VIDEORESIZE:
