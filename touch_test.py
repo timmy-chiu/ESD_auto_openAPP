@@ -83,7 +83,7 @@ def paint():
                 screen.fill(WHITE)  # 調整大小後重置背景
 
         # 如果超過10秒沒有滑鼠事件，重置畫面為全白
-        if current_time - last_event_time > 3000:
+        if current_time - last_event_time > 10000:
             screen.fill(WHITE)
             pygame.display.flip()
             last_event_time = current_time  # 重置計時器
