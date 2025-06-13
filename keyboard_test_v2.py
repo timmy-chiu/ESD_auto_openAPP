@@ -133,6 +133,9 @@ class KeyboardTestApp(QtWidgets.QWidget):
         # 定時器，用於在測試完成後延時變回白色背景
         self.reset_timer = QtCore.QTimer()
         self.reset_timer.timeout.connect(self.reset_background_color)
+        # 定時器，用於在測試中途超過時間變成紅色背景
+        self.key_timeout_timer = QtCore.QTimer()
+        self.key_timeout_timer.timeout.connect(self.timeout_set_background_color)
         self.init_ui()
         self.show()
 
@@ -176,7 +179,12 @@ class KeyboardTestApp(QtWidgets.QWidget):
                                    "Press Enter 3 times to restart\n"
                                    "Press Right key 3 times to enter numeric keypad test.")
             self.set_background_color(QColor(0, 200, 0))  # 綠色
+            # 停止鍵盤按鍵計時
+            if self.key_timeout_timer.isActive():
+                self.key_timeout_timer.stop()
             # 啟動定時器，20秒後恢復白色背景
+            if self.reset_timer.isActive():
+                self.reset_timer.stop()
             self.reset_timer.start(20000)  # 20,000 毫秒 = 20 秒
         else:
             # 顯示當前需要按下的按鍵
@@ -185,6 +193,10 @@ class KeyboardTestApp(QtWidgets.QWidget):
             # 停止定時器，如果正在運行
             if self.reset_timer.isActive():
                 self.reset_timer.stop()
+            # 開始鍵盤按鍵計時，5秒沒按下正確按鍵變紅色
+            if self.key_timeout_timer.isActive():
+                self.key_timeout_timer.stop()
+            self.key_timeout_timer.start(5000)
 
     def set_background_color(self, color):
         """更改背景顏色"""
@@ -200,6 +212,12 @@ class KeyboardTestApp(QtWidgets.QWidget):
         self.set_background_color("white")
         # 停止定時器
         self.reset_timer.stop()
+
+    def timeout_set_background_color(self):
+        """在按鍵定時器超時後，將背景顏色設為紅色"""
+        self.set_background_color("red")
+        # 停止定時器
+        self.key_timeout_timer.stop()
 
     def get_key_name(self, key):
         """根據按鍵代碼獲取按鍵名稱，主要用於調試輸出"""
@@ -245,6 +263,7 @@ class KeyboardTestApp(QtWidgets.QWidget):
                     self.right_press_count = 0
                     self.key_list = key_list_numeric  # 切換到數字鍵盤按鍵列表
                     self.display_current_key()
+            # 按下 Space 鍵計數切換視窗
             elif key == QtCore.Qt.Key_Space:
                 self.space_press_count += 1
                 if self.space_press_count >= 3:
