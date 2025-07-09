@@ -197,7 +197,7 @@ class KeyboardTestApp(QtWidgets.QWidget):
             # 開始鍵盤按鍵計時，5秒沒按下正確按鍵變紅色
             if self.key_timeout_timer.isActive():
                 self.key_timeout_timer.stop()
-            self.key_timeout_timer.start(10000)
+            self.key_timeout_timer.start(20000)
 
     def set_background_color(self, color):
         """更改背景顏色"""
@@ -216,7 +216,7 @@ class KeyboardTestApp(QtWidgets.QWidget):
 
     def timeout_set_background_color(self):
         """在按鍵定時器超時後，將背景顏色設為紅色"""
-        self.set_background_color("red")
+        self.set_background_color(QColor(220, 0, 0))
         # 停止定時器
         self.key_timeout_timer.stop()
 
@@ -232,6 +232,9 @@ class KeyboardTestApp(QtWidgets.QWidget):
         return f"Unknown key ({key})"
 
     def keyPressEvent(self, event):
+        if event.isAutoRepeat():
+            return  # 忽略長按產生的重複事件
+
         """處理按鍵事件"""
         key = event.key()
         key_name = self.get_key_name(key)
