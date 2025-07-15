@@ -6,12 +6,12 @@ import pygetwindow as gw
 # 定義要測試的一般按鍵列表
 key_list_general = [
     'Esc', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12',
+    'Home', 'End', 'Insert', 'Delete', 'PageUp', 'PageDown',
     '`', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 'Backspace',
     'Tab', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '[', ']', '\\',
     'CapsLock', 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ';', '\'', 'Enter',
-    'Shift_L', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '/', 'Shift_R',
-    'Ctrl_L', 'Alt_L', 'Space', 'Alt_R', 'Ctrl_R', 'Insert', 'Delete', 'Home',
-    'End', 'PageUp', 'PageDown', 'Up', 'Down', 'Left', 'Right'
+    'Shift_L', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '/', 'Shift_R', 'Up',
+    'Ctrl_L', 'Alt_L', 'Space', 'Alt_R', 'Ctrl_R', 'Left', 'Down', 'Right'
 ]
 
 # 定義要測試的數字鍵盤按鍵列表
@@ -186,7 +186,7 @@ class KeyboardTestApp(QtWidgets.QWidget):
             # 啟動定時器，20秒後恢復白色背景
             if self.reset_timer.isActive():
                 self.reset_timer.stop()
-            self.reset_timer.start(20000)  # 20,000 毫秒 = 20 秒
+            self.reset_timer.start(30000)  # 20,000 毫秒 = 20 秒
         else:
             # 顯示當前需要按下的按鍵
             self.label.setText(f"Please press: {self.key_list[self.current_key_index]}\n(If unavailable, press Esc key to skip)")
@@ -197,7 +197,7 @@ class KeyboardTestApp(QtWidgets.QWidget):
             # 開始鍵盤按鍵計時，5秒沒按下正確按鍵變紅色
             if self.key_timeout_timer.isActive():
                 self.key_timeout_timer.stop()
-            self.key_timeout_timer.start(20000)
+            self.key_timeout_timer.start(30000)
 
     def set_background_color(self, color):
         """更改背景顏色"""
@@ -285,7 +285,7 @@ class KeyboardTestApp(QtWidgets.QWidget):
         expected_key_name = self.key_list[self.current_key_index]
         expected_key = key_mapping.get(expected_key_name, None)
 
-        if key == QtCore.Qt.Key_Escape:
+        if key_name == "`":
             # 按下 Esc 鍵，跳過當前按鍵
             self.current_key_index += 1
             self.display_current_key()
