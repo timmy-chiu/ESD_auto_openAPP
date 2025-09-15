@@ -71,9 +71,6 @@ def open_paint_maximize():
         while True:
             window = gw.getWindowsWithTitle('touch')
             if window:
-                window[0].maximize()
-                # time.sleep(1)
-                # window[0].minimize()
                 break
             time.sleep(1)
     except Exception as e:
@@ -160,4 +157,4 @@ def open_and_layout_windows():
 
 if __name__ == "__main__":
     open_paint_maximize()
-    open_and_layout_windows()
+    # open_and_layout_windows()
