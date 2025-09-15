@@ -2,6 +2,7 @@ import sys
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtGui import QPalette, QColor
 import pygetwindow as gw
+from touchpad_controller import ensure_touchpad_on
 
 # 定義要測試的一般按鍵列表
 key_list_general = [
@@ -301,6 +302,8 @@ class KeyboardTestApp(QtWidgets.QWidget):
         try:
             windows = gw.getWindowsWithTitle("touch test")
             if windows:
+                # 開啟touchpad
+                ensure_touchpad_on()
                 win = windows[0]
                 if win.isMinimized:
                     win.restore()  # 還原視窗
