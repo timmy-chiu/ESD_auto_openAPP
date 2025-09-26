@@ -46,7 +46,7 @@ def paint():
 
             # === 鍵盤操作 ===
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
+                if event.key == pygame.K_ESCAPE or event.key == pygame.K_BACKQUOTE:
                     print("ESC：最小化")
                     # 關閉觸控板
                     ensure_touchpad_off()

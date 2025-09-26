@@ -286,7 +286,7 @@ class KeyboardTestApp(QtWidgets.QWidget):
         expected_key_name = self.key_list[self.current_key_index]
         expected_key = key_mapping.get(expected_key_name, None)
 
-        if key_name == "`":
+        if key_name == "`" or key_name == "Esc":
             # 按下 Esc 鍵，跳過當前按鍵
             self.current_key_index += 1
             self.display_current_key()
