@@ -48,7 +48,7 @@ def open_media_player(x, y, width, height):
         m3u8_path = os.path.join(config["video_dir"], "playlist.m3u8")
         with open(m3u8_path, "w") as f:
             f.write("#EXTM3U\n")
-            for _ in range(15):
+            for _ in range(config["video_repeat_times"]):
                 f.write("#EXTINF:-1,\n")
                 f.write("timer.mp4\n")
         os.startfile(m3u8_path)
@@ -157,4 +157,4 @@ def open_and_layout_windows():
 
 if __name__ == "__main__":
     open_paint_maximize()
-    # open_and_layout_windows()
+    open_and_layout_windows()
