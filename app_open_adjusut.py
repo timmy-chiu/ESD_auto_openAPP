@@ -46,11 +46,11 @@ def open_media_player(x, y, width, height):
     try:
         os.makedirs(config["video_dir"], exist_ok=True)
         m3u8_path = os.path.join(config["video_dir"], "playlist.m3u8")
-        with open(m3u8_path, "w") as f:
-            f.write("#EXTM3U\n")
-            for _ in range(config["video_repeat_times"]):
-                f.write("#EXTINF:-1,\n")
-                f.write("timer.mp4\n")
+        # with open(m3u8_path, "w") as f:
+        #     f.write("#EXTM3U\n")
+        #     for _ in range(config["video_repeat_times"]):
+        #         f.write("#EXTINF:-1,\n")
+        #         f.write("timer.mp4\n")
         os.startfile(m3u8_path)
         adjust_window(['媒體播放器', 'Media Player'], x, y, width, height)
     except Exception as e:
