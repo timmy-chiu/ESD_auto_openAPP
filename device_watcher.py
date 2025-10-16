@@ -78,7 +78,12 @@ class DeviceMonitorWindow(QWidget):
                 name = new_device.Name
                 error_code = new_device.ConfigManagerErrorCode
                 error_desc = get_error_description(error_code)
-                self.display_alert(f"檢測到新設備： \n{name} \n({error_desc})")
+
+                # 僅當錯誤碼 ≠ 0 時，才顯示異常提示
+                if error_code != 0:
+                    self.display_alert(f"檢測到新設備：\n{name}\n({error_desc})")
+                # else:
+                #     可選擇紀錄但不顯示（正常狀態）
         except wmi.x_wmi_timed_out:
             pass  # 超時則忽略
         except Exception as e:
@@ -102,7 +107,10 @@ class DeviceMonitorWindow(QWidget):
                 name = modified_device.Name
                 error_code = modified_device.ConfigManagerErrorCode
                 error_desc = get_error_description(error_code)
-                self.display_alert(f"設備狀態變化： \n{name} \n({error_desc})")
+
+                # 僅當錯誤碼為 10, 22, 43 時才顯示，否則不跳出，避免正常更新被誤判
+                if error_code in [10, 22, 43]:
+                    self.display_alert(f"設備狀態變化：\n{name}\n({error_desc})")
         except wmi.x_wmi_timed_out:
             pass  # 超時則忽略
         except Exception as e:
