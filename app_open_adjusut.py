@@ -148,11 +148,11 @@ def open_and_layout_windows():
     open_device_watcher(screen_width - width_dm, screen_height-height_dw, width_dm, height_dw)
 
     # 增加上方空間
-    space_y = int(screen_height * 0.1)
-    open_camera(0, space_y, w_half, int(screen_height * 0.7))
+    space_y = int(screen_height * 0.05)
+    open_camera(space_y, space_y, w_half, int(screen_height * 0.7))
 
     remaining_w = screen_width - width_dm - w_half
-    open_media_player(w_half, space_y, remaining_w, int(screen_height * 0.4))
+    open_media_player(w_half, space_y, remaining_w, int(screen_height * 0.35))
     open_battery_setting(w_half, int(screen_height * 0.7), remaining_w, int(screen_height * 0.3))
     open_keyboard_test(w_half, int(screen_height * 0.4), remaining_w, int(screen_height * 0.3))
 
