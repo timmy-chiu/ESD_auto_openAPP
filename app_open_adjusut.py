@@ -83,12 +83,13 @@ def open_burnInTest(x, y, width, height):
         time.sleep(10)
 
         # 先將焦點切到桌面（按 Win + D）
-        pyautogui.hotkey('winleft', 'd')
+        pyautogui.press('winleft')
         time.sleep(1)
-        pyautogui.hotkey('winleft', 'd')
+        pyautogui.press('winleft')
+        time.sleep(1)
 
         # 再切回 BurnInTest 視窗並啟動測試
-        window = gw.getWindowsWithTitle('BurnInTest 10.2')
+        window = gw.getWindowsWithTitle('BurnInTest')
         if window:
             window[0].activate()
             time.sleep(1)
@@ -97,7 +98,7 @@ def open_burnInTest(x, y, width, height):
         else:
             print("無法找到 BurnInTest 視窗")
 
-        adjust_window(['BurnInTest 10.2'], x, y, width, height)
+        adjust_window(['BurnInTest'], x, y, width, height)
         time.sleep(10)
 
         # 檢查是否有 3D 視窗
