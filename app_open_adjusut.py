@@ -149,7 +149,8 @@ def open_and_layout_windows():
 
     # 增加上方空間
     space_y = int(screen_height * 0.05)
-    open_camera(space_y, space_y, w_half, int(screen_height * 0.7))
+    space_x = space_y
+    open_camera(space_x, space_y, w_half - space_x, int(screen_height * 0.7))
 
     remaining_w = screen_width - width_dm - w_half
     open_media_player(w_half, space_y, remaining_w, int(screen_height * 0.35))
