@@ -81,6 +81,8 @@ def open_burnInTest(x, y, width, height):
     try:
         subprocess.Popen(config["burnintest_path"])
         time.sleep(10)
+        adjust_window(['BurnInTest'], x, y, width, height)
+        time.sleep(1)
 
         # 先將焦點切到桌面（按 Win + D）
         pyautogui.press('winleft')
@@ -111,7 +113,6 @@ def open_burnInTest(x, y, width, height):
             print("找不到 3D 視窗。")
     except Exception as e:
         print("open_burnInTest 錯誤:", e)
-
 
 
 def adjust_window(titles, x, y, width, height):
