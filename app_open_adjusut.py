@@ -142,22 +142,25 @@ def open_and_layout_windows():
     w_half = int(screen_width * 0.5)
     open_burnInTest(0, 0, w_half, screen_height)
 
+    # 裝置管理員寬度
     width_dm = int(screen_width * 0.2)
-    open_device_manager(screen_width - width_dm, 0, width_dm, screen_height)
-
-    height_dw = int(screen_height * 0.25)
-    open_device_watcher(screen_width - width_dm, screen_height-height_dw, width_dm, height_dw)
 
     # 增加上方空間
     space_y = int(screen_height * 0.05)
     space_x = space_y
     open_camera(space_x, space_y, w_half - space_x, int(screen_height * 0.7))
 
+    # 先開影片、電池頁面(可能蓋到裝置管理員)
     remaining_w = screen_width - width_dm - w_half
     open_media_player(w_half, space_y, remaining_w, int(screen_height * 0.35))
     open_battery_setting(w_half, int(screen_height * 0.7), remaining_w, int(screen_height * 0.3))
-    open_keyboard_test(w_half, int(screen_height * 0.4), remaining_w, int(screen_height * 0.3))
 
+    open_device_manager(screen_width - width_dm, 0, width_dm, screen_height)
+
+    height_dw = int(screen_height * 0.25)
+    open_device_watcher(screen_width - width_dm, screen_height-height_dw, width_dm, height_dw)
+
+    open_keyboard_test(w_half, int(screen_height * 0.4), remaining_w, int(screen_height * 0.3))
 
 if __name__ == "__main__":
     open_paint_maximize()
