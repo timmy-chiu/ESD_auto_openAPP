@@ -3,6 +3,7 @@ from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtGui import QPalette, QColor
 import pygetwindow as gw
 from touchpad_controller import ensure_touchpad_on
+import pyautogui  # ← 新增這行
 
 # 定義要測試的一般按鍵列表
 key_list_general = [
@@ -304,6 +305,12 @@ class KeyboardTestApp(QtWidgets.QWidget):
             if windows:
                 # 開啟touchpad
                 ensure_touchpad_on()
+
+                # 🖱️ 將滑鼠移到螢幕正中央
+                screen_width, screen_height = pyautogui.size()
+                pyautogui.moveTo(screen_width // 2, screen_height // 2)
+                print("滑鼠已移動到螢幕正中央")
+
                 win = windows[0]
                 if win.isMinimized:
                     win.restore()  # 還原視窗
