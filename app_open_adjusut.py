@@ -77,10 +77,25 @@ def open_paint_maximize():
         print("open_paint_maximize 錯誤:", e)
 
 
-def open_burnInTest(x, y, width, height):
+def open_burn(x, y, width, height):
     try:
-        subprocess.Popen(config["burnintest_path"])
-        time.sleep(10)
+        # 從 config 讀取所有可能路徑
+        possible_paths = config.get("burnInTest_paths", [])
+
+        burn_path = None
+        for path in possible_paths:
+            if os.path.exists(path):
+                burn_path = path
+                print(f"找到 BurnInTest 路徑: {path}")
+                break
+
+        # 若都找不到
+        if not burn_path:
+            print("❌ 找不到 BurnInTest 執行檔，請確認 config.json 中的路徑設定。")
+            return
+
+        subprocess.Popen(burn_path)
+        time.sleep(20)
         adjust_window(['BurnInTest'], x, y, width, height)
         time.sleep(1)
 
@@ -132,6 +147,7 @@ def adjust_window(titles, x, y, width, height):
             break
         attempt += 1
         time.sleep(1)
+    time.sleep(1)
     if not window_found:
         print("找不到符合的視窗，已跳過。")
 
@@ -141,7 +157,7 @@ def open_and_layout_windows():
     screen_height -= 50
 
     w_half = int(screen_width * 0.5)
-    open_burnInTest(0, 0, w_half, screen_height)
+    open_burn(0, 0, w_half, screen_height)
 
     # 裝置管理員寬度
     width_dm = int(screen_width * 0.2)
