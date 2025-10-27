@@ -133,7 +133,7 @@ def open_burn(x, y, width, height):
 def adjust_window(titles, x, y, width, height):
     attempt = 0
     window_found = False
-    while attempt < 20:
+    while attempt < 40:
         for title in titles:
             windows = gw.getWindowsWithTitle(title)
             if windows:
