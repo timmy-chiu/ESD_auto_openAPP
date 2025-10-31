@@ -1,9 +1,13 @@
 import sys
+import time
+
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtGui import QPalette, QColor
 import pygetwindow as gw
 from touchpad_controller import ensure_touchpad_on
-import pyautogui  # ← 新增這行
+import pyautogui
+import win32gui, win32con, win32api
+
 
 # 定義要測試的一般按鍵列表
 key_list_general = [
@@ -116,6 +120,7 @@ key_mapping = {
     'Enter_Numpad': QtCore.Qt.Key_Enter,
 }
 
+
 class KeyboardTestApp(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
@@ -147,6 +152,21 @@ class KeyboardTestApp(QtWidgets.QWidget):
         self.setWindowTitle("Keyboard Test")
         self.setGeometry(100, 100, 500, 200)
 
+        # 置於 __init__ 的結尾附近（init_ui() 之後）
+        self.guard_enabled = True  # 是否執行「置頂+搶焦」
+        self.pause_secs = 60  # 三連空白後暫停秒數
+
+        # 讓視窗永遠置頂（Qt 層，夠用就好）
+        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint, True)
+        self.raise_()
+        self.activateWindow()
+        self.setFocus()
+
+        # 每秒維持一次置頂+聚焦（僅在 guard_enabled=True 時才做）
+        self.topmost_timer = QtCore.QTimer(self)
+        self.topmost_timer.timeout.connect(lambda: self.ensure_topmost_and_focus())
+        self.topmost_timer.start(3000)
+
         # 創建標籤用於顯示提示文字
         self.label = QtWidgets.QLabel("", self)
         self.label.setAlignment(QtCore.Qt.AlignCenter)
@@ -162,6 +182,60 @@ class KeyboardTestApp(QtWidgets.QWidget):
 
         # 初次顯示要求按下 Enter 鍵 3 次
         self.display_start_message()
+
+    def ensure_topmost_and_focus(self):
+        """確保本視窗為 TOPMOST，必要時把焦點搶回來"""
+        try:
+            # 若沒在前景或要求強制，就嘗試聚焦
+            if self.guard_enabled:
+                hwnd = int(self.winId())
+                # 置頂（Win32，覆蓋一些框架在特定情況被降層）
+                win32gui.SetWindowPos(
+                    hwnd,
+                    win32con.HWND_TOPMOST,
+                    0, 0, 0, 0,
+                    win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_SHOWWINDOW
+                )
+
+                # Windows 防止任意搶焦點，按住 ALT 可降低限制
+                win32api.keybd_event(win32con.VK_MENU, 0, 0, 0)  # ALT down
+                try:
+                    # 顯示但不激活，再前景化
+                    win32gui.ShowWindow(hwnd, win32con.SW_SHOWNORMAL)
+                    win32gui.SetForegroundWindow(hwnd)
+                    # Qt 端同步提升
+                    self.raise_()
+                    self.activateWindow()
+                    self.setFocus()
+                finally:
+                    win32api.keybd_event(
+                        win32con.VK_MENU, 0, win32con.KEYEVENTF_KEYUP, 0
+                    )  # ALT up
+        except Exception as e:
+            print("ensure_topmost_and_focus 失敗:", e)
+
+    def pause_guard(self):
+        """停用 guard 60 秒後自動恢復"""
+        if not self.guard_enabled:
+            return
+        self.guard_enabled = False
+        # 停用期間可把置頂旗標暫時拿掉，避免擋到別的程式（可選）
+        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint, False)
+        self.show()  # 重新套用旗標需要 show 一次
+
+        # 60 秒後恢復
+        QtCore.QTimer.singleShot(self.pause_secs * 1000, self.resume_guard)
+
+    def resume_guard(self):
+        """恢復 guard 並立刻確保一次置頂+焦點"""
+        if self.guard_enabled:
+            return
+        self.guard_enabled = True
+        # 恢復置頂旗標（可選）
+        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint, True)
+        self.show()
+        # 立即拉回一次（避免使用者回來時收不到鍵）
+        QtCore.QTimer.singleShot(10, lambda: self.ensure_topmost_and_focus())
 
     def display_start_message(self):
         """顯示要求按下 Enter 鍵 3 次的起始訊息"""
@@ -247,7 +321,6 @@ class KeyboardTestApp(QtWidgets.QWidget):
             if key == QtCore.Qt.Key_Return or key == QtCore.Qt.Key_Enter:
                 # 按下 Enter 鍵計數
                 self.enter_press_count += 1
-                self.right_press_count = 0  # 重置 Right 鍵計數
                 if self.enter_press_count >= 3:
                     # 重新開始一般鍵盤測試
                     self.test_started = True
@@ -260,7 +333,6 @@ class KeyboardTestApp(QtWidgets.QWidget):
             elif key == QtCore.Qt.Key_Right and not self.in_numeric_test:
                 # 按下 Right 鍵計數
                 self.right_press_count += 1
-                self.enter_press_count = 0  # 重置 Enter 鍵計數
                 if self.right_press_count >= 3:
                     # 進入數字鍵盤測試
                     self.test_started = True
@@ -274,8 +346,12 @@ class KeyboardTestApp(QtWidgets.QWidget):
                 self.space_press_count += 1
                 if self.space_press_count >= 3:
                     self.space_press_count = 0
+                    self.pause_guard()
                     self.focus_touch_test_window()
                 return
+            elif key == QtCore.Qt.Key_Alt:
+                # skip切換focus的按鍵
+                print()
             else:
                 # 其他按鍵，重置計數
                 self.enter_press_count = 0
@@ -298,6 +374,7 @@ class KeyboardTestApp(QtWidgets.QWidget):
         else:
             # 按錯了鍵，可以在此處添加提示訊息或記錄
             pass
+
 
     def focus_touch_test_window(self):
         try:
@@ -327,6 +404,7 @@ def main():
     window = KeyboardTestApp()
     window.show()
     sys.exit(app.exec_())
+
 
 if __name__ == '__main__':
     main()
