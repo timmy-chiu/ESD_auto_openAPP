@@ -1,7 +1,7 @@
 import pygame
 import sys
 import pygetwindow as gw
-from touchpad_controller import ensure_touchpad_on, ensure_touchpad_off
+
 
 def paint():
     pygame.init()
@@ -35,9 +35,6 @@ def paint():
     right_clicked = False
     mouse_moved = False
 
-    # 關閉觸控板
-    ensure_touchpad_off()
-
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -48,8 +45,6 @@ def paint():
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE or event.key == pygame.K_BACKQUOTE:
                     print("ESC：最小化")
-                    # 關閉觸控板
-                    ensure_touchpad_off()
                     mouse_test_mode = False
                     left_clicked = right_clicked = mouse_moved = False
                     screen.fill(WHITE)
