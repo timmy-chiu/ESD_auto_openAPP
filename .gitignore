@@ -7,6 +7,7 @@ dist/
 *.toc
 *.pkg
 *.zip
+/*.spec 
 
 # 可執行檔
 *.exe
