@@ -57,12 +57,29 @@ def open_media_player(x, y, width, height):
         print("open_media_player 錯誤:", e)
 
 
-def open_camera(x, y, width, height):
+def has_camera():
+    """
+    透過 PowerShell 檢查系統是否存在影像擷取裝置
+    """
     try:
-        subprocess.Popen(['start', 'microsoft.windows.camera:'], shell=True)
-        adjust_window(['相機', 'Camera'], x, y, width, height)
-    except Exception as e:
-        print("open_camera 錯誤:", e)
+        result = subprocess.run(
+            ['powershell', '-Command', 'Get-PnpDevice -Class Camera | Where-Object { $_.Status -eq "OK" }'],
+            capture_output=True, text=True
+        )
+        return bool(result.stdout.strip())
+    except Exception:
+        return False
+
+
+def open_camera(x, y, width, height):
+    if has_camera():
+        try:
+            subprocess.Popen(['start', 'microsoft.windows.camera:'], shell=True)
+            adjust_window(['相機', 'Camera'], x, y, width, height)
+        except Exception as e:
+            print("open_camera 錯誤:", e)
+    else:
+        print("沒有內建相機，不開啟此功能")
 
 
 def open_paint_maximize():
