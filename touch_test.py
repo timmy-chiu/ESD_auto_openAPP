@@ -1,3 +1,4 @@
+import time
 import pygame
 import sys
 import pygetwindow as gw
@@ -13,6 +14,11 @@ def paint():
     # 無邊框 + 全螢幕
     screen = pygame.display.set_mode((screen_width, screen_height), pygame.NOFRAME)
     pygame.display.set_caption("Touch Test")
+
+    time.sleep(1)
+    window = gw.getWindowsWithTitle('Touch Test')
+    if window:
+        window[0].minimize()
 
     WHITE = (255, 255, 255)
     GREEN = (0, 200, 0)
