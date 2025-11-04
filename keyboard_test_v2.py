@@ -156,8 +156,6 @@ class KeyboardTestApp(QtWidgets.QWidget):
         self.guard_enabled = True  # 是否執行「置頂+搶焦」
         self.pause_secs = 60  # 三連空白後暫停秒數
 
-        # 讓視窗永遠置頂（Qt 層，夠用就好）
-        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint, True)
         self.raise_()
         self.activateWindow()
         self.setFocus()
@@ -186,55 +184,60 @@ class KeyboardTestApp(QtWidgets.QWidget):
     def ensure_topmost_and_focus(self):
         """確保本視窗為 TOPMOST，必要時把焦點搶回來"""
         try:
-            # 若沒在前景或要求強制，就嘗試聚焦
-            if self.guard_enabled:
-                hwnd = int(self.winId())
-                # 置頂（Win32，覆蓋一些框架在特定情況被降層）
-                win32gui.SetWindowPos(
-                    hwnd,
-                    win32con.HWND_TOPMOST,
-                    0, 0, 0, 0,
-                    win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_SHOWWINDOW
-                )
+            hwnd = int(self.winId())
+            # 置頂（Win32，覆蓋一些框架在特定情況被降層）
+            win32gui.SetWindowPos(
+                hwnd,
+                win32con.HWND_TOPMOST,
+                0, 0, 0, 0,
+                win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_SHOWWINDOW
+            )
 
-                # Windows 防止任意搶焦點，按住 ALT 可降低限制
-                win32api.keybd_event(win32con.VK_MENU, 0, 0, 0)  # ALT down
-                try:
-                    # 顯示但不激活，再前景化
-                    win32gui.ShowWindow(hwnd, win32con.SW_SHOWNORMAL)
-                    win32gui.SetForegroundWindow(hwnd)
-                    # Qt 端同步提升
-                    self.raise_()
-                    self.activateWindow()
-                    self.setFocus()
-                finally:
-                    win32api.keybd_event(
-                        win32con.VK_MENU, 0, win32con.KEYEVENTF_KEYUP, 0
-                    )  # ALT up
+            # Windows 防止任意搶焦點，按住 ALT 可降低限制
+            win32api.keybd_event(win32con.VK_MENU, 0, 0, 0)  # ALT down
         except Exception as e:
-            print("ensure_topmost_and_focus 失敗:", e)
+            print("置頂失敗:", e)
+
+        try:
+            # 顯示但不激活，再前景化
+            win32gui.ShowWindow(hwnd, win32con.SW_SHOWNORMAL)
+            win32gui.SetForegroundWindow(hwnd)
+            # Qt 端同步提升
+            self.raise_()
+            self.activateWindow()
+            self.setFocus()
+        finally:
+            win32api.keybd_event(
+                win32con.VK_MENU, 0, win32con.KEYEVENTF_KEYUP, 0
+            )  # ALT up
+
 
     def pause_guard(self):
-        """停用 guard 60 秒後自動恢復"""
-        if not self.guard_enabled:
-            return
-        self.guard_enabled = False
-        # 停用期間可把置頂旗標暫時拿掉，避免擋到別的程式（可選）
-        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint, False)
-        self.show()  # 重新套用旗標需要 show 一次
+        # 立刻取消置頂（Win32）
+        try:
+            hwnd = int(self.winId())
+            win32gui.SetWindowPos(
+                hwnd,
+                win32con.HWND_NOTOPMOST,
+                0, 0, 0, 0,
+                win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_SHOWWINDOW
+            )
+        except Exception as e:
+            print("pause_guard 取消置頂失敗:", e)
 
-        # 60 秒後恢復
+        # 停掉每 3 秒自動置頂的定時器，避免又被拉回去
+        if self.topmost_timer.isActive():
+            self.topmost_timer.stop()
+
+        # 不要 setWindowFlag、不用 show()
         QtCore.QTimer.singleShot(self.pause_secs * 1000, self.resume_guard)
 
     def resume_guard(self):
-        """恢復 guard 並立刻確保一次置頂+焦點"""
-        if self.guard_enabled:
-            return
-        self.guard_enabled = True
-        # 恢復置頂旗標（可選）
-        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint, True)
-        self.show()
-        # 立即拉回一次（避免使用者回來時收不到鍵）
+        # 重新啟動定時器
+        if not self.topmost_timer.isActive():
+            self.topmost_timer.start(3000)
+
+        # 不要 setWindowFlag、不用 show()
         QtCore.QTimer.singleShot(10, lambda: self.ensure_topmost_and_focus())
 
     def display_start_message(self):
@@ -378,7 +381,7 @@ class KeyboardTestApp(QtWidgets.QWidget):
 
     def focus_touch_test_window(self):
         try:
-            windows = gw.getWindowsWithTitle("touch test")
+            windows = gw.getWindowsWithTitle("Touch Test")
             if windows:
                 # 開啟touchpad
                 ensure_touchpad_on()
@@ -391,7 +394,7 @@ class KeyboardTestApp(QtWidgets.QWidget):
                 win = windows[0]
                 if win.isMinimized:
                     win.restore()  # 還原視窗
-                win.activate()  # 聚焦視窗
+                QtCore.QTimer.singleShot(0, lambda: win.activate())  # 聚焦視窗
                 print("已叫出並聚焦 touch test 視窗")
             else:
                 print("找不到 touch test 視窗")
