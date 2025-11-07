@@ -310,7 +310,7 @@ class KeyboardTestApp(QtWidgets.QWidget):
             return chr(key)
         return f"Unknown key ({key})"
 
-    def keyReleaseEvent(self, event):
+    def keyPressEvent(self, event):
         if event.isAutoRepeat():
             return  # 忽略長按產生的重複事件
 
