@@ -81,9 +81,10 @@ def paint():
                 current_color = colors[1]
             # 滑鼠移動
             elif event.type == pygame.MOUSEMOTION:
-                if not mouse_moved:
-                    mouse_moved = True
-                    print("偵測到滑鼠移動")
+                if event.rel != (0, 0):
+                    if not mouse_moved:
+                        mouse_moved = True
+                        print("偵測到滑鼠移動")
                 if drawing:
                     current_pos = event.pos
                     if last_pos:
