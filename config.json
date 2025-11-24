@@ -2,6 +2,7 @@
   "device_watcher_path": "dist/device_watcher.exe",
   "keyboard_test_path": "dist/keyboard_test_v2.exe",
   "touch_test_path": "dist/touch_test.exe",
+  "white_window_path": "dist/white_screen.exe",
   "burnInTest_paths": [
         "C:/Program Files/BurnInTest/bit.exe",
         "C:/Program Files (x86)/BurnInTest/bit.exe"

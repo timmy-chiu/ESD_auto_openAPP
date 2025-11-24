@@ -122,6 +122,8 @@ def open_burn(x, y, width, height):
         pyautogui.press('winleft')
         time.sleep(1)
 
+        adjust_window(['BurnInTest'], x, y, width, height)
+
         # 再切回 BurnInTest 視窗並啟動測試
         window = gw.getWindowsWithTitle('BurnInTest')
         if window:
@@ -132,7 +134,6 @@ def open_burn(x, y, width, height):
         else:
             print("無法找到 BurnInTest 視窗")
 
-        adjust_window(['BurnInTest'], x, y, width, height)
         time.sleep(10)
 
         # 檢查是否有 3D 視窗
@@ -181,21 +182,35 @@ def open_and_layout_windows():
 
     # 增加上方空間
     space_y = int(screen_height * 0.05)
-    space_x = space_y
+    space_x = int(space_y * 1.5)
     open_camera(space_x, space_y, w_half - space_x, int(screen_height * 0.7))
 
     open_device_manager(screen_width - width_dm, 0, width_dm, screen_height)
 
     # 先開影片、電池頁面(可能蓋到裝置管理員)
     remaining_w = screen_width - width_dm - w_half
-    open_media_player(w_half, 0, remaining_w, int(screen_height * 0.34))
+    open_media_player(w_half, space_y, remaining_w, int(screen_height * 0.34))
     open_battery_setting(w_half, int(screen_height * 0.65), remaining_w, int(screen_height * 0.3))
 
     height_dw = int(screen_height * 0.25)
     open_device_watcher(screen_width - width_dm, screen_height-height_dw, width_dm, height_dw)
 
-    open_keyboard_test(w_half, int(screen_height * 0.35), remaining_w, int(screen_height * 0.3))
+    open_keyboard_test(w_half, int(screen_height * 0.4), remaining_w, int(screen_height * 0.3))
+
+
+def open_white_window():
+    try:
+        subprocess.Popen([config["white_window_path"]])
+        for i in range(1, 15):
+            windows = gw.getWindowsWithTitle("white")
+            if windows:
+                break
+            time.sleep(1)
+    except Exception as e:
+        print("open_keyboard_test 錯誤:", e)
+
 
 if __name__ == "__main__":
     open_paint_maximize()
+    open_white_window()
     open_and_layout_windows()
