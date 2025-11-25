@@ -133,17 +133,7 @@ def open_burn(x, y, width, height):
             print("已按下 F4 啟動測試。")
         else:
             print("無法找到 BurnInTest 視窗")
-
         time.sleep(10)
-
-        # 檢查是否有 3D 視窗
-        three_d_window = gw.getWindowsWithTitle('BurnInTest 3D')
-        if three_d_window:
-            print("3D 視窗已開啟，切回 BurnInTest 視窗。")
-            if window:
-                window[0].activate()
-        else:
-            print("找不到 3D 視窗。")
     except Exception as e:
         print("open_burnInTest 錯誤:", e)
 
