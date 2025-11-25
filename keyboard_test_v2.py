@@ -183,8 +183,9 @@ class KeyboardTestApp(QtWidgets.QWidget):
 
     def ensure_topmost_and_focus(self):
         """確保本視窗為 TOPMOST，必要時把焦點搶回來"""
+        hwnd = int(self.winId())
+
         try:
-            hwnd = int(self.winId())
             # 置頂（Win32，覆蓋一些框架在特定情況被降層）
             win32gui.SetWindowPos(
                 hwnd,
@@ -192,13 +193,14 @@ class KeyboardTestApp(QtWidgets.QWidget):
                 0, 0, 0, 0,
                 win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_SHOWWINDOW
             )
-
-            # Windows 防止任意搶焦點，按住 ALT 可降低限制
-            win32api.keybd_event(win32con.VK_MENU, 0, 0, 0)  # ALT down
         except Exception as e:
             print("置頂失敗:", e)
+            return
 
         try:
+            # Windows 防止任意搶焦點，按住 ALT 可降低限制
+            win32api.keybd_event(win32con.VK_MENU, 0, 0, 0)  # ALT down
+
             # 顯示但不激活，再前景化
             win32gui.ShowWindow(hwnd, win32con.SW_SHOWNORMAL)
             win32gui.SetForegroundWindow(hwnd)
@@ -206,10 +208,16 @@ class KeyboardTestApp(QtWidgets.QWidget):
             self.raise_()
             self.activateWindow()
             self.setFocus()
+
+        except Exception as e:
+            print("Focus error:", e)
         finally:
-            win32api.keybd_event(
-                win32con.VK_MENU, 0, win32con.KEYEVENTF_KEYUP, 0
-            )  # ALT up
+            try:
+                win32api.keybd_event(
+                    win32con.VK_MENU, 0, win32con.KEYEVENTF_KEYUP, 0
+                )
+            except:
+                pass
 
 
     def pause_guard(self):
