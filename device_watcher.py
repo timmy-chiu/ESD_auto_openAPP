@@ -22,6 +22,10 @@ class DeviceMonitorWindow(QWidget):
         super().__init__()
         self.init_ui()
 
+        # 新增：目前所有「還在異常中」的項目（設備 + 電池）
+        # key 範例： "device:xxxx", "battery"
+        self.active_errors = set()
+
         # 創建 WMI 物件和監視器，用於監控設備的創建、刪除和修改事件
         self.c = wmi.WMI()
         self.creation_watcher = self.c.Win32_PnPEntity.watch_for(notification_type="Creation")
@@ -31,7 +35,7 @@ class DeviceMonitorWindow(QWidget):
         # 使用定時器每秒檢查設備狀態變化
         self.timer = QTimer()
         self.timer.timeout.connect(self.check_device_status)
-        self.timer.start(3000)  # 每1秒執行一次檢查
+        self.timer.start(500)  # 每1秒執行一次檢查
         self.last_battery_percent = None
 
     def init_ui(self):
@@ -58,12 +62,45 @@ class DeviceMonitorWindow(QWidget):
         layout.addWidget(self.label)
         self.setLayout(layout)
 
+    def get_device_key(self, device):
+        """
+        取得設備的唯一 key，盡量避免重複
+        """
+        return getattr(device, "PNPDeviceID", None) \
+            or getattr(device, "DeviceID", None) \
+            or getattr(device, "Name", "Unknown")
+
+    def add_error(self, key, message):
+        """
+        新增一個異常項目，並切換成紅色背景
+        """
+        self.active_errors.add(key)
+        self.setPalette(self.alert_palette)
+        self.label.setText(message)
+
+    def clear_error(self, key, message=None):
+        """
+        移除某項異常；如果 message 有提供，就顯示「恢復訊息」。
+        """
+        recovered = False
+
+        # 判斷這項是否原本就在異常列表
+        if key in self.active_errors:
+            self.active_errors.remove(key)
+            recovered = True
+
+        # 若有恢復，顯示恢復訊息
+        if recovered and message:
+            self.label.setText(message)
+
+        # 若所有異常都清光 → 背景恢復
+        if not self.active_errors:
+            self.reset_background()
+
     def display_alert(self, message):
         # 顯示紅色背景並顯示訊息
         self.setPalette(self.alert_palette)
         self.label.setText(message)
-        # 在5秒後恢復背景顏色
-        # QTimer.singleShot(5000, self.reset_background)
 
     def reset_background(self):
         # 恢復到預設背景顏色
@@ -73,32 +110,37 @@ class DeviceMonitorWindow(QWidget):
     def check_device_status(self):
         # 檢查設備創建事件
         try:
-            new_device = self.creation_watcher(timeout_ms=1)  # 設置超時為1000毫秒
+            new_device = self.creation_watcher(timeout_ms=1)
             if new_device:
                 name = new_device.Name
                 error_code = new_device.ConfigManagerErrorCode
                 error_desc = get_error_description(error_code)
+                key = "device:" + self.get_device_key(new_device)
 
-                # 僅當錯誤碼 ≠ 0 時，才顯示異常提示
                 if error_code != 0:
-                    self.display_alert(f"檢測到新設備：\n{name}\n({error_desc})")
-                # else:
-                #     可選擇紀錄但不顯示（正常狀態）
+                    # 新出現就是異常 → 加入異常集合
+                    self.add_error(key, f"檢測到新設備：\n{name}\n({error_desc})")
+                else:
+                    # 新插上的設備是正常的 → 確保不在錯誤集合內
+                    self.clear_error(key, f"設備已恢復正常：\n{name}")
         except wmi.x_wmi_timed_out:
-            pass  # 超時則忽略
+            pass
         except Exception as e:
-            self.display_alert(f"創建監視器錯誤：{e}")
+            self.add_error("device:creation", f"創建監視器錯誤：{e}")
 
         # 檢查設備刪除事件
         try:
             removed_device = self.deletion_watcher(timeout_ms=1)
             if removed_device:
                 name = removed_device.Name
-                self.display_alert(f"設備被移除： \n{name}")
+                key = "device:" + self.get_device_key(removed_device)
+
+                # 視為異常狀態
+                self.add_error(key, f"設備被移除：\n{name}")
         except wmi.x_wmi_timed_out:
-            pass  # 超時則忽略
+            pass
         except Exception as e:
-            self.display_alert(f"刪除監視器錯誤：{e}")
+            self.add_error("device:deletion", f"刪除監視器錯誤：{e}")
 
         # 檢查設備修改事件
         try:
@@ -107,14 +149,18 @@ class DeviceMonitorWindow(QWidget):
                 name = modified_device.Name
                 error_code = modified_device.ConfigManagerErrorCode
                 error_desc = get_error_description(error_code)
+                key = "device:" + self.get_device_key(modified_device)
 
-                # 僅當錯誤碼為 10, 22, 43 時才顯示，否則不跳出，避免正常更新被誤判
                 if error_code in [10, 22, 43]:
-                    self.display_alert(f"設備狀態變化：\n{name}\n({error_desc})")
+                    # 變成異常 → 加進集合
+                    self.add_error(key, f"設備狀態變化：\n{name}\n({error_desc})")
+                elif error_code == 0:
+                    # 回到正常 → 移出集合，若全部正常會自動變白
+                    self.clear_error(key, f"設備已恢復正常：\n{name}")
         except wmi.x_wmi_timed_out:
-            pass  # 超時則忽略
+            pass
         except Exception as e:
-            self.display_alert(f"修改監視器錯誤：{e}")
+            self.add_error("device:modify", f"修改監視器錯誤：{e}")
 
         # 額外檢查電池狀態
         try:
@@ -123,15 +169,24 @@ class DeviceMonitorWindow(QWidget):
                 # 取得電池狀態
                 is_charging, battery_percent = battery_status
 
+                battery_key = "battery"
+                battery_issue = False
+
                 # 狀態為未充電
                 if not is_charging:
-                    self.display_alert("Battery not charging")
+                    battery_issue = True
 
                 # 電池電量下降
                 if self.last_battery_percent is not None and battery_percent < self.last_battery_percent:
-                    self.display_alert("Battery not charging")
+                    battery_issue = True
+                else:
+                    # 若電量沒下降才更新last電量
+                    self.last_battery_percent = battery_percent
 
-                self.last_battery_percent = battery_percent
+                if battery_issue:
+                    self.add_error(battery_key, "Battery not charging")
+                else:
+                    self.clear_error(battery_key, "Battery status recovered")
         except Exception as e:
             print(f"檢查電池狀態失敗: {e}")
 
@@ -141,6 +196,7 @@ def main():
     window = DeviceMonitorWindow()
     window.show()
     sys.exit(app.exec_())
+
 
 if __name__ == "__main__":
     main()
