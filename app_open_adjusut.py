@@ -116,13 +116,11 @@ def open_burn(x, y, width, height):
         adjust_window(['BurnInTest'], x, y, width, height)
         time.sleep(1)
 
-        # 先將焦點切到桌面（按 Win + D）
+        # 先將焦點切到桌面
         pyautogui.press('winleft')
         time.sleep(1)
         pyautogui.press('winleft')
         time.sleep(1)
-
-        adjust_window(['BurnInTest'], x, y, width, height)
 
         # 再切回 BurnInTest 視窗並啟動測試
         window = gw.getWindowsWithTitle('BurnInTest')
