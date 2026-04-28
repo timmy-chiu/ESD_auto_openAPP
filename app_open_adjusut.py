@@ -4,9 +4,19 @@ import pygetwindow as gw
 import time
 import os
 import json
+import sys
+from pathlib import Path
 
 # 載入 config
-with open("config.json", "r", encoding="utf-8") as f:
+BASE_DIR = Path(sys.executable).resolve().parent if getattr(sys, "frozen", False) else Path(__file__).resolve().parent
+
+
+def app_path(path):
+    path = Path(path)
+    return path if path.is_absolute() else BASE_DIR / path
+
+
+with open(BASE_DIR / "config.json", "r", encoding="utf-8") as f:
     config = json.load(f)
 
 
@@ -20,7 +30,7 @@ def open_device_manager(x, y, width, height):
 
 def open_device_watcher(x, y, width, height):
     try:
-        subprocess.Popen([config["device_watcher_path"]])
+        subprocess.Popen([str(app_path(config["device_watcher_path"]))])
         adjust_window(['device watcher'], x, y, width, height)
     except Exception as e:
         print("open_device_watcher 錯誤:", e)
@@ -36,7 +46,7 @@ def open_battery_setting(x, y, width, height):
 
 def open_keyboard_test(x, y, width, height):
     try:
-        subprocess.Popen([config["keyboard_test_path"]])
+        subprocess.Popen([str(app_path(config["keyboard_test_path"]))])
         adjust_window(['keyboard'], x, y, width, height)
     except Exception as e:
         print("open_keyboard_test 錯誤:", e)
@@ -44,14 +54,22 @@ def open_keyboard_test(x, y, width, height):
 
 def open_media_player(x, y, width, height):
     try:
-        os.makedirs(config["video_dir"], exist_ok=True)
-        m3u8_path = os.path.join(config["video_dir"], "playlist.m3u8")
-        # with open(m3u8_path, "w") as f:
-        #     f.write("#EXTM3U\n")
-        #     for _ in range(config["video_repeat_times"]):
-        #         f.write("#EXTINF:-1,\n")
-        #         f.write("timer.mp4\n")
-        os.startfile(m3u8_path)
+        video_dir = app_path(config["video_dir"])
+        video_dir.mkdir(parents=True, exist_ok=True)
+
+        timer_path = video_dir / "timer.mp4"
+        if not timer_path.exists():
+            raise FileNotFoundError(timer_path)
+
+        m3u8_path = video_dir / "playlist.m3u8"
+        repeat_times = int(config.get("video_repeat_times", 1))
+        with open(m3u8_path, "w", encoding="utf-8", newline="\n") as f:
+            f.write("#EXTM3U\n")
+            for _ in range(repeat_times):
+                f.write("#EXTINF:-1,\n")
+                f.write(f"{timer_path.as_uri()}\n")
+
+        os.startfile(str(m3u8_path))
         adjust_window(['媒體播放器', 'Media Player'], x, y, width, height)
     except Exception as e:
         print("open_media_player 錯誤:", e)
@@ -84,7 +102,7 @@ def open_camera(x, y, width, height):
 
 def open_paint_maximize():
     try:
-        subprocess.Popen([config["touch_test_path"]])
+        subprocess.Popen([str(app_path(config["touch_test_path"]))])
         while True:
             window = gw.getWindowsWithTitle('touch')
             if window:
@@ -188,7 +206,7 @@ def open_and_layout_windows():
 
 def open_white_window():
     try:
-        subprocess.Popen([config["white_window_path"]])
+        subprocess.Popen([str(app_path(config["white_window_path"]))])
         for i in range(1, 15):
             windows = gw.getWindowsWithTitle("white")
             if windows:
