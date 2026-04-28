@@ -107,11 +107,19 @@ class DeviceMonitorWindow(QWidget):
 
         first_seen = self.pending_errors.get(key, (time.monotonic(), None))[0]
         self.pending_errors[key] = (first_seen, message)
+        self.show_pending_error(message)
 
     def activate_error(self, key, message):
         self.active_errors.add(key)
         self.pending_errors.pop(key, None)
         self.setPalette(self.alert_palette)
+        self.label.setText(message)
+
+    def show_pending_error(self, message):
+        if self.active_errors:
+            return
+
+        self.setPalette(self.default_palette)
         self.label.setText(message)
 
     def promote_pending_errors(self):
@@ -130,7 +138,7 @@ class DeviceMonitorWindow(QWidget):
         移除某項異常；如果 message 有提供，就顯示「恢復訊息」。
         """
         recovered = False
-        self.pending_errors.pop(key, None)
+        pending_removed = self.pending_errors.pop(key, None) is not None
 
         # 判斷這項是否原本就在異常列表
         if key in self.active_errors:
@@ -139,7 +147,25 @@ class DeviceMonitorWindow(QWidget):
 
         # 若有恢復，顯示恢復訊息
         if recovered and message:
+            if self.active_errors:
+                self.label.setText(message)
+            elif self.pending_errors:
+                _, pending_message = next(reversed(self.pending_errors.values()))
+                self.show_pending_error(pending_message)
+            else:
+                self.setPalette(self.default_palette)
+                self.label.setText(message)
+            return
+
+        if not self.active_errors and self.pending_errors:
+            _, pending_message = next(reversed(self.pending_errors.values()))
+            self.show_pending_error(pending_message)
+            return
+
+        if pending_removed and message:
+            self.setPalette(self.default_palette)
             self.label.setText(message)
+            return
 
         # 若所有異常都清光 → 背景恢復
         if not self.active_errors:
