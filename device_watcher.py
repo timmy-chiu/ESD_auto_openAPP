@@ -1,9 +1,34 @@
 import sys
+import json
+import time
+from pathlib import Path
 import wmi  # 導入 wmi 模組，用於訪問 Windows 管理工具
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout
 from PyQt5.QtCore import QTimer, Qt
 from PyQt5.QtGui import QPalette, QColor
 from check_battery import check_battery_status
+
+
+def get_app_dir():
+    return Path(sys.executable).resolve().parent if getattr(sys, "frozen", False) else Path(__file__).resolve().parent
+
+
+def load_config():
+    app_dir = get_app_dir()
+    candidates = [
+        app_dir / "config.json",
+        app_dir.parent / "config.json",
+    ]
+
+    for path in candidates:
+        if path.exists():
+            with open(path, "r", encoding="utf-8") as f:
+                return json.load(f)
+
+    return {}
+
+
+config = load_config()
 
 
 def get_error_description(error_code):
@@ -25,6 +50,8 @@ class DeviceMonitorWindow(QWidget):
         # 新增：目前所有「還在異常中」的項目（設備 + 電池）
         # key 範例： "device:xxxx", "battery"
         self.active_errors = set()
+        self.pending_errors = {}
+        self.alert_delay_seconds = max(0, float(config.get("device_watcher_alert_delay_seconds", 5)))
 
         # 創建 WMI 物件和監視器，用於監控設備的創建、刪除和修改事件
         self.c = wmi.WMI()
@@ -74,15 +101,36 @@ class DeviceMonitorWindow(QWidget):
         """
         新增一個異常項目，並切換成紅色背景
         """
+        if self.alert_delay_seconds == 0 or key in self.active_errors:
+            self.activate_error(key, message)
+            return
+
+        first_seen = self.pending_errors.get(key, (time.monotonic(), None))[0]
+        self.pending_errors[key] = (first_seen, message)
+
+    def activate_error(self, key, message):
         self.active_errors.add(key)
+        self.pending_errors.pop(key, None)
         self.setPalette(self.alert_palette)
         self.label.setText(message)
+
+    def promote_pending_errors(self):
+        now = time.monotonic()
+        expired = [
+            (key, message)
+            for key, (first_seen, message) in self.pending_errors.items()
+            if now - first_seen >= self.alert_delay_seconds
+        ]
+
+        for key, message in expired:
+            self.activate_error(key, message)
 
     def clear_error(self, key, message=None):
         """
         移除某項異常；如果 message 有提供，就顯示「恢復訊息」。
         """
         recovered = False
+        self.pending_errors.pop(key, None)
 
         # 判斷這項是否原本就在異常列表
         if key in self.active_errors:
@@ -108,6 +156,8 @@ class DeviceMonitorWindow(QWidget):
         self.label.setText("監控設備狀態變化...")
 
     def check_device_status(self):
+        self.promote_pending_errors()
+
         # 檢查設備創建事件
         try:
             new_device = self.creation_watcher(timeout_ms=1)

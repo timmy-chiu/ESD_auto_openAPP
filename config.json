@@ -8,5 +8,6 @@
         "C:/Program Files (x86)/BurnInTest/bit.exe"
     ],
   "video_dir": "video",
-  "video_repeat_times": 15
+  "video_repeat_times": 15,
+  "device_watcher_alert_delay_seconds": 15
 }
