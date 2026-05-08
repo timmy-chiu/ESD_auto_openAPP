@@ -1,4 +1,4 @@
-import subprocess
+﻿import subprocess
 import pyautogui
 import pygetwindow as gw
 import time
@@ -14,8 +14,6 @@ BASE_DIR = Path(sys.executable).resolve().parent if getattr(sys, "frozen", False
 def app_path(path):
     path = Path(path)
     return path if path.is_absolute() else BASE_DIR / path
-
-
 with open(BASE_DIR / "config.json", "r", encoding="utf-8") as f:
     config = json.load(f)
 
@@ -61,19 +59,24 @@ def open_media_player(x, y, width, height):
         if not timer_path.exists():
             raise FileNotFoundError(timer_path)
 
-        m3u8_path = video_dir / "playlist.m3u8"
         repeat_times = int(config.get("video_repeat_times", 1))
+
+        # m3u8 寫入絕對 file URI，避免工作目錄不同時找不到 timer.mp4。
+        m3u8_path = video_dir / "playlist.m3u8"
         with open(m3u8_path, "w", encoding="utf-8", newline="\n") as f:
             f.write("#EXTM3U\n")
             for _ in range(repeat_times):
                 f.write("#EXTINF:-1,\n")
                 f.write(f"{timer_path.as_uri()}\n")
 
+        # 新版 Media Player 在新電腦第一次開 m3u8 可能尚未初始化；
+        # 先開 mp4，再開 m3u8，避免第一次啟動時找不到影片。
+        os.startfile(str(timer_path))
+        time.sleep(4)
         os.startfile(str(m3u8_path))
-        adjust_window(['媒體播放器', 'Media Player'], x, y, width, height)
+        adjust_window(['Media Player'], x, y, width, height)
     except Exception as e:
         print("open_media_player 錯誤:", e)
-
 
 def has_camera():
     """
