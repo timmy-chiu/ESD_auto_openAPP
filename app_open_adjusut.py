@@ -45,7 +45,7 @@ def open_battery_setting(x, y, width, height):
 def open_keyboard_test(x, y, width, height):
     try:
         subprocess.Popen([str(app_path(config["keyboard_test_path"]))])
-        adjust_window(['keyboard'], x, y, width, height)
+        adjust_window(['Keyboard Test'], x, y, width, height)
     except Exception as e:
         print("open_keyboard_test 錯誤:", e)
 
@@ -160,7 +160,7 @@ def open_burn(x, y, width, height):
 def adjust_window(titles, x, y, width, height):
     attempt = 0
     window_found = False
-    while attempt < 40:
+    while attempt < 80:
         for title in titles:
             windows = gw.getWindowsWithTitle(title)
             if windows:
@@ -176,7 +176,7 @@ def adjust_window(titles, x, y, width, height):
         time.sleep(1)
     time.sleep(1)
     if not window_found:
-        print("找不到符合的視窗，已跳過。")
+        print("找不到符合的視窗 {titles}，已跳過。")
 
 
 def open_and_layout_windows():
