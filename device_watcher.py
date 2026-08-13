@@ -64,6 +64,9 @@ class DeviceMonitorWindow(QWidget):
         self.timer.timeout.connect(self.check_device_status)
         self.timer.start(500)  # 每1秒執行一次檢查
         self.last_battery_percent = None
+        self.highest_battery_percent = None
+        self.battery_error_latched = False
+        self.battery_drop_threshold = 50
 
     def init_ui(self):
         # 設置視窗標題和大小
@@ -246,20 +249,34 @@ class DeviceMonitorWindow(QWidget):
                 is_charging, battery_percent = battery_status
 
                 battery_key = "battery"
-                battery_issue = False
+                if (
+                    self.highest_battery_percent is None
+                    or battery_percent > self.highest_battery_percent
+                ):
+                    self.highest_battery_percent = battery_percent
 
-                # 狀態為未充電
-                if not is_charging:
-                    battery_issue = True
+                recovery_percent = (
+                    self.highest_battery_percent - self.battery_drop_threshold
+                )
+                battery_is_rising = (
+                    self.last_battery_percent is not None
+                    and battery_percent > self.last_battery_percent
+                )
 
-                # 電池電量下降
-                if self.last_battery_percent is not None and battery_percent < self.last_battery_percent:
-                    battery_issue = True
-                else:
-                    # 若電量沒下降才更新last電量
-                    self.last_battery_percent = battery_percent
+                # 異常一旦觸發，只能靠電量實際回升到門檻解除。
+                if not self.battery_error_latched:
+                    if not is_charging or battery_percent <= recovery_percent:
+                        self.battery_error_latched = True
+                elif (
+                    is_charging
+                    and battery_is_rising
+                    and battery_percent >= recovery_percent
+                ):
+                    self.battery_error_latched = False
 
-                if battery_issue:
+                self.last_battery_percent = battery_percent
+
+                if self.battery_error_latched:
                     self.add_error(battery_key, "Battery not charging")
                 else:
                     self.clear_error(battery_key, "Battery status recovered")
